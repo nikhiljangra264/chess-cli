@@ -493,12 +493,13 @@ static void undo_game (board_t *board, history_t *history) {
 static bool _play (board_t *board, history_t *history) {
 	player_t players[2];
 	get_players(history, players, players+1);
-	int turn = (board->chance & BLACK ? 1: 0);
+	int turn = (board->chance == BLACK ? 1: 0);
 	if (players[turn].type == HUMAN)
 		return true;
 
 	// create condition for other types
 
 	// AI
+	// players[turn].type == AI_LVLx
 	return ai_play(board, history);
 }

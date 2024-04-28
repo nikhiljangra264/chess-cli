@@ -249,17 +249,19 @@ enum return_option_t init_ai_game_settings_menu (game_settings_t *game_settings)
 			selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
 		else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
 			if (selected_opt == START_OPT) {
+				short int human_index = (play_as == BLACK) ? 1: 0;
+				short int ai_index = 1 - human_index;
 				plr_name[plr_name_len] = '\0';
-				init_player(game_settings->players, plr_name, HUMAN);
+				init_player(game_settings->players + human_index, plr_name, HUMAN);
 				switch (selected_difficulty) {
 					case 0:
-						init_player(game_settings->players+1, "AI LVL 1", AI_LVL1);
+						init_player(game_settings->players + ai_index, "AI LVL 1", AI_LVL1);
 						break;
 					case 1:
-						init_player(game_settings->players+1, "AI LVL 2", AI_LVL2);
+						init_player(game_settings->players + ai_index, "AI LVL 2", AI_LVL2);
 						break;
 					case 2:
-						init_player(game_settings->players+1, "AI LVL 3", AI_LVL3);
+						init_player(game_settings->players + ai_index, "AI LVL 3", AI_LVL3);
 						break;
 				}
 				game_settings->game_mode = AI_MODE;
