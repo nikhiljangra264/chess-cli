@@ -26,8 +26,8 @@ void init_main_menu() {
 
 	// initialize options
 	wchar_t woptions[NO_OF_OPTS][OPTS_SIZE+1];
-	swprintf(woptions[PLAY_HUMAN_OPT], OPTS_SIZE, L"%-*s\u265E", OPTS_SIZE-2, "Play vs Human");
-	swprintf(woptions[PLAY_AI_OPT], OPTS_SIZE, L"%-*s\u265E", OPTS_SIZE-2, "Play vs AI");
+	swprintf(woptions[PLAY_HUMAN_OPT], OPTS_SIZE, L"%-*s", OPTS_SIZE, "Play vs Human");
+	swprintf(woptions[PLAY_AI_OPT], OPTS_SIZE, L"%-*s", OPTS_SIZE, "Play vs AI");
 	swprintf(woptions[LOAD_OPT], OPTS_SIZE, L"%-*s", OPTS_SIZE, "Load");
 	swprintf(woptions[QUIT_OPT], OPTS_SIZE, L"%-*s", OPTS_SIZE, "Quit");
 	int selected_opt = 0;
@@ -122,6 +122,8 @@ void init_main_menu() {
 			if (i == selected_opt)
 				wattron(main_menu_scr, A_STANDOUT);
 			mvwaddnwstr(main_menu_scr, main_menu_scr_h/2 - NO_OF_OPTS/2 + i, main_menu_scr_w/2 - (OPTS_SIZE-1)/2, woptions[i], OPTS_SIZE);
+			if (i == selected_opt)
+				mvwaddnwstr(main_menu_scr, main_menu_scr_h/2 - NO_OF_OPTS/2 + i, main_menu_scr_w/2 + (OPTS_SIZE-1)/2, L"\u265E", 1);
 			wattroff(main_menu_scr, A_STANDOUT);
 		}
 
