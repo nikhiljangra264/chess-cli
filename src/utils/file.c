@@ -21,16 +21,19 @@ bool save_hstk (const history_t *history) {
 /*
  *	FORMAT OF SAVE FILE
  *
- *	PLAYER1_INFO	LVL1_DELIMITER	PLAYER2_INFO	LVL1_DELIMITER	MOVE_NOTATION	LVL2_DELIMITER	CAPTURED_PIECES(FIXED SIZE)	BOARD_STATE	LVL1_DELIMITER
+ *	TIME_LIMIT	LVL1_DELIMITER	PLAYER1_INFO	LVL1_DELIMITER	PLAYER2_INFO	LVL1_DELIMITER	MOVE_NOTATION	LVL2_DELIMITER	CAPTURED_PIECES(FIXED SIZE)	BOARD_STATE	LVL2_DELIMITER	PLR1_TIME	LVL2_DELIMITER	PLR2_TIME	LVL1_DELIMITER
  *
- *  PLAYER_INFO		-	FIRST CHAR FOR PLAYERTYPE THEN ATMAX PLAYERNAME_SIZE CHARS FOR NAME	(DYNAMIC SIZE, ATMAX PLAYERNAME_SIZE + 1)
- *	MOVE_NOTATION	-	FORMAT DEFINED BY chess_engine.c:find_move_notation					(DYNAMIC SIZE)
- *	LVL2_DELIMITER	-	A SINGLE CHARACTER TO MARK END OF MOVE_NOTATION						(1 CHAR)
- *	CAPTURED_PIECES	-	2 DIGITS FOR EACH PIECES EXCEPT KINGS IN ORDER AS IN board.c:PIECES	(20 CHARS)
+ *	TIME_LIMIT		-	CONTIGUOUS NUMERAL CHARACTERS											(DYNAMIC SIZE, ATMOST TIME_LIMIT_STR_SIZE)
+ *  PLAYER_INFO		-	FIRST CHAR FOR PLAYERTYPE THEN ATMAX PLAYERNAME_SIZE CHARS FOR NAME		(DYNAMIC SIZE, ATMAX PLAYERNAME_SIZE + 1)
+ *  LVL1_DELIMITER	-	A SINGLE CHARACTER TO SEPARATE DIFFERENT BOARDS AND COMMON VARIABLES	(1 CHAR)
+ *	MOVE_NOTATION	-	FORMAT DEFINED BY chess_engine.c:find_move_notation						(DYNAMIC SIZE, ATMOST MAX_MOVE_NOTATION_SIZE)
+ *	CAPTURED_PIECES	-	2 DIGITS FOR EACH PIECES EXCEPT KINGS IN ORDER AS IN board.c:PIECES		(20 CHARS)
  *	BOARD_STATE		-	FILLED FROM (0, 0) CELL TO (7, 7) CELL
- *					-	ASCII_PIECE_FACE PIECE_MOVED/NOT_MOVED								(2 CHARS FOR EACH FILLED CELL)
- *					-	INTEGER REPRESENTING COUNT OF CONTINUOUS EMPTY CELLS				(DYNAMIC SIZE)
- *	LVL1_DELIMITER	-	A SINGLE CHARACTER TO MARK END OF BOARD_STATE						(1 CHAR)
+ *					-	ASCII_PIECE_FACE PIECE_MOVED/NOT_MOVED									(2 CHARS FOR EACH FILLED CELL)
+ *					-	INTEGER REPRESENTING COUNT OF CONTINUOUS EMPTY CELLS					(DYNAMIC SIZE)
+ *	PLR1_TIME		-	CONTIGUOUS NUMERAL CHARACTERS											(DYNAMIC SIZE, atmost TIME_LIMIT_STR_SIZE)
+ *	PLR2_TIME		-	CONTIGUOUS NUMERAL CHARACTERS											(DYNAMIC SIZE, ATMOST TIME_LIMIT_STR_SIZE)
+ *	LVL2_DELIMITER	-	A SINGLE CHARACTER TO SEPARATE DIFFERENT BOARD VARIABLES				(1 CHAR)
  */
 
 	if (history == NULL || get_size(history) == 0)
@@ -50,21 +53,35 @@ bool save_hstk (const history_t *history) {
 	char buffer[BUFFER_SIZE+1];
 	unsigned int ptr = 0;
 
+	// add time_limit
+	int time_limit = get_time_limit(history);
+	char time_limit_str[TIME_LIMIT_STR_SIZE+1];
+	memset(time_limit_str, 0, TIME_LIMIT_STR_SIZE);
+	itoa(time_limit, time_limit_str);
+	for (int i = 0; i < TIME_LIMIT_STR_SIZE && time_limit_str[i] != '\0'; i++)
+		buffer[ptr++] = time_limit_str[i];
+	// LVL1_DELIMITER
+	buffer[ptr++] = LVL1_DELIMITER;
+
 	// add players info
 	player_t plr1, plr2;
 	get_players(history, &plr1, &plr2);
+	// plr1 info
 	buffer[ptr++] = plr1.type + '0';
 	for (int i = 0; i < sizeof(player_name_t) && plr1.name[i] != '\0'; i++)
 		buffer[ptr++] = plr1.name[i];
+	// LVL1_DELIMITER
 	buffer[ptr++] = LVL1_DELIMITER;
+	// plr2 info
 	buffer[ptr++] = plr2.type + '0';
 	for (int i = 0; i < sizeof(player_name_t) && plr2.name[i] != '\0'; i++)
 		buffer[ptr++] = plr2.name[i];
+	// LVL1_DELIMITER
 	buffer[ptr++] = LVL1_DELIMITER;
 
 	const int CAPTURED_DATA_SIZE = 20;	// fixed lenght, 10 capturable pieces, 3 characters for each
 	const int MAX_BOARD_DATA_SIZE = 128;	// if each of 64 cell is filled, 2 characters for each piece
-	const int MAX_DATA_SIZE = MAX_MOVE_NOTATION_SIZE + 1 + CAPTURED_DATA_SIZE + MAX_BOARD_DATA_SIZE + 1;	// delimiters after variable sized move notation and board description.
+	const int MAX_DATA_SIZE = MAX_MOVE_NOTATION_SIZE + 1 + CAPTURED_DATA_SIZE + MAX_BOARD_DATA_SIZE + 1 + TIME_LIMIT_STR_SIZE + 1 + TIME_LIMIT_STR_SIZE + 1;	// delimiters after variable sized move notation, board description and plr_times.
 	history_t *reversed_history = reverse_history(history);
 	int total_moves = get_size(reversed_history);
 	for (int i=0; i<total_moves; i++) {
@@ -79,6 +96,8 @@ bool save_hstk (const history_t *history) {
 		const char *move = peek_move(reversed_history, 0);
 		for (int j = 0; j < MAX_MOVE_NOTATION_SIZE && move[j] != '\0'; j++)
 			buffer[ptr++] = move[j];
+
+		// LVL2_DELIMITER
 		buffer[ptr++] = LVL2_DELIMITER;
 		
 		const board_t *board = peek_board(reversed_history, 0);
@@ -124,6 +143,28 @@ bool save_hstk (const history_t *history) {
 			if (cnt[1] != '\0') buffer[ptr++] = cnt[1];
 			empty_cells_count = 0;
 		}
+
+		// LVL2_DELIMITER
+		buffer[ptr++] = LVL2_DELIMITER;
+
+		// store plr1_time
+		time_limit = board->plr_times[0];
+		memset(time_limit_str, 0, TIME_LIMIT_STR_SIZE);
+		itoa(time_limit, time_limit_str);
+		for (int i = 0; i < TIME_LIMIT_STR_SIZE && time_limit_str[i] != '\0'; i++)
+			buffer[ptr++] = time_limit_str[i];
+
+		// LVL2_DELIMITER
+		buffer[ptr++] = LVL2_DELIMITER;
+
+		// store plr2_time
+		time_limit = board->plr_times[1];
+		memset(time_limit_str, 0, TIME_LIMIT_STR_SIZE);
+		itoa(time_limit, time_limit_str);
+		for (int i = 0; i < TIME_LIMIT_STR_SIZE && time_limit_str[i] != '\0'; i++)
+			buffer[ptr++] = time_limit_str[i];
+
+		// LVL1_DELIMITER
 		buffer[ptr++] = LVL1_DELIMITER;
 
 		// remove top board
@@ -156,6 +197,22 @@ history_t* load_hstk (const timestamp_t timestamp) {
 	bool error = false;
 	char c;
 	unsigned int ptr;
+
+	// extract time_limit
+	char time_limit_str[TIME_LIMIT_STR_SIZE+1];
+	memset(time_limit_str, 0, TIME_LIMIT_STR_SIZE+1);
+	ptr = 0;
+	while ((c = getc(fp)) != EOF && c != LVL1_DELIMITER) {
+		if ((c == '-' && ptr == 0) || (c >= '0' && c <= '9') && ptr < TIME_LIMIT_STR_SIZE) {
+			time_limit_str[ptr++] = c;
+		} else {
+			error = true;
+			break;
+		}
+	}
+	int time_limit = atoi(time_limit_str);
+	if (time_limit < -1 || time_limit > 9999)
+		error = true;
 
 	// extract players info
 	player_t plr1, plr2;
@@ -191,7 +248,7 @@ history_t* load_hstk (const timestamp_t timestamp) {
 	}
 	plr2.name[ptr++] = '\0';
 
-	history_t *history = create_history(plr1, plr2);
+	history_t *history = create_history(plr1, plr2, time_limit);
 	set_timestamp(history, timestamp);
 
 	board_t *board = NULL;
@@ -207,7 +264,7 @@ history_t* load_hstk (const timestamp_t timestamp) {
 			break;
 		}
 
-		board = calloc(1, sizeof(board_t));
+		board = (board_t *) calloc(1, sizeof(board_t));
 		if (get_size(history)&1)
 			board->chance = WHITE;
 		else
@@ -236,7 +293,7 @@ history_t* load_hstk (const timestamp_t timestamp) {
 		short row = 0, col = 0;
 		piece = NULL;
 		unsigned int empty_cells_count = 0;
-		while ((c = getc(fp)) != LVL1_DELIMITER && !error) {
+		while ((c = getc(fp)) != LVL2_DELIMITER && !error) {
 			if (c >= '0' && c <= '9') {
 				if (piece != NULL) {
 					error = true;
@@ -323,6 +380,41 @@ history_t* load_hstk (const timestamp_t timestamp) {
 			}
 			empty_cells_count--;
 		}
+
+		// extract plr1_time
+		memset(time_limit_str, 0, TIME_LIMIT_STR_SIZE+1);
+		ptr = 0;
+		while ((c = getc(fp)) != LVL2_DELIMITER && !error) {
+			if ((c  == '-' && ptr == 0) || (c >= '0' && c <= '9') && ptr < TIME_LIMIT_STR_SIZE) {
+				time_limit_str[ptr++] = c;
+			} else {
+				error = true;
+				break;
+			}
+		}
+		time_limit = atoi(time_limit_str);
+		if (time_limit < -1 || time_limit > 9999)
+			error = true;
+		board->plr_times[0] = time_limit;
+
+		// extract plr2_time
+		memset(time_limit_str, 0, TIME_LIMIT_STR_SIZE+1);
+		ptr = 0;
+		while ((c = getc(fp)) != LVL1_DELIMITER && !error) {
+			if ((c == '-' && ptr == 0) || (c >= '0' && c <= '9') && ptr < TIME_LIMIT_STR_SIZE) {
+				time_limit_str[ptr++] = c;
+			} else {
+				error = true;
+				break;
+			}
+		}
+		time_limit = atoi(time_limit_str);
+		if (time_limit < -1 || time_limit > 9999)
+			error = true;
+		board->plr_times[1] = time_limit;
+
+		if (error)
+			break;
 
 		add_move(history, board, move_notation);
 		delete_board(board);

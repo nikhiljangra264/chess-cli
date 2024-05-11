@@ -2,9 +2,9 @@ ifeq ($(OS),Windows_NT)
 	PROGRAM = chess-cli.exe
 else
 	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Darwin)
-		DMACROS := -D_XOPEN_SOURCE_EXTENDED
-	endif
+# 	ifeq ($(UNAME_S),Darwin)
+# 		DMACROS := -D_XOPEN_SOURCE_EXTENDED
+# 	endif
 	PROGRAM = chess-cli
 endif
 
@@ -16,6 +16,7 @@ INSTALL_DIR = $(HOME)/.local/bin
 SRC = $(SRC_DIR)/*.c $(SRC_DIR)/core/*.c $(SRC_DIR)/ai/*.c $(SRC_DIR)/menus/*.c $(SRC_DIR)/utils/*.c
 LDFLAGS += -lncursesw
 CFLAGS += -Wall
+DMACROS = -D_XOPEN_SOURCE_EXTENDED
 CC = gcc
 DEBUGFLAGS = -g3 -O0
 

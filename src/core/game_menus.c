@@ -8,7 +8,7 @@ face_t show_promote_menu (const color_t color) {
 	WINDOW *promote_menu_scr;
 	initialize_with_box_at_center(promote_menu_scr);
 
-	const NO_OF_OPTS = PIECE_TYPES - 2;
+	const int NO_OF_OPTS = PIECE_TYPES - 2;
 	unsigned int options[NO_OF_OPTS];
 	unsigned int selected_opt = 0;
 	for (unsigned int i = 0; i < PIECE_TYPES; i++) {

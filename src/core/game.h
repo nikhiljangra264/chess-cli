@@ -58,7 +58,7 @@
 #define game_over_scr_x ((term_w - game_over_scr_w) / 2)	// center of screen
 
 
-enum game_return_code	{ QUIT, RESTART, CONTINUE, INVALID_LOAD, _PLAY_ERROR };
+enum game_return_code	{ QUIT, RESTART, CONTINUE, INVALID_LOAD, PLAY_ERROR };
 enum game_mode_t		{ HUMAN_MODE, AI_MODE, LOAD_MODE };
 
 typedef struct game_settings_t {
@@ -72,7 +72,7 @@ typedef struct game_settings_t {
 	};
 } game_settings_t;
 
-enum game_return_code	init_game	(const game_settings_t game_settings);
-
+enum game_return_code	init_game		(const game_settings_t game_settings);
+void					clock_timeout	(void);
 
 #endif

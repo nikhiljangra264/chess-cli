@@ -14,7 +14,7 @@ static	int	get_option_offset	(const char *const option_str);
 enum return_option_t init_human_game_settings_menu (game_settings_t *game_settings) {
 	player_name_t plr1_name, plr2_name;
 	int plr1_name_len = 0, plr2_name_len = 0;
-	int timer_opts[] = { 0, 3, 5, 10, 15, 30, 60 };	// in mins, 0 is off
+	int timer_opts[] = { -1, 3, 5, 10, 15, 30, 60 };	// in mins, -1 is off
 	int selected_timer = 0;
 	int no_of_timers = sizeof(timer_opts)/sizeof(timer_opts[0]);
 

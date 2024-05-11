@@ -39,7 +39,7 @@ char get_piece_for_move_notation (const piece_t *piece) {
 }
 
 
-void init_board(board_t *board) {
+void init_board(board_t *board, int time_limit) {
 	memset(board, 0, sizeof(*board));
 	for (short i=0; i<8; i++) {
 		for (short j=0; j<8; j++) {
@@ -54,6 +54,8 @@ void init_board(board_t *board) {
 
 	board->chance = WHITE;
 	board->result = PENDING;
+	board->is_fake = false;
+	board->plr_times[0] = board->plr_times[1] = time_limit;
 }
 
 

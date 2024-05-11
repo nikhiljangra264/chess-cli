@@ -14,6 +14,8 @@ struct history_t {
 	timestamp_t timestamp;
 	player_t players[2];
 	enum result result;
+	int time_limit;	// in secs
+	bool is_fake;
 };
 
 struct board_node_t {
@@ -25,7 +27,7 @@ struct board_node_t {
 static	const board_node_t*		peek	(const history_t *history, int n);
 
 
-history_t* create_history (const player_t plr1, const player_t plr2) {
+history_t* create_history (const player_t plr1, const player_t plr2, int time_limit) {
 	history_t *history = (history_t*) malloc(sizeof(history_t));
 	memset(history, 0, sizeof(history_t));
 
@@ -41,6 +43,9 @@ history_t* create_history (const player_t plr1, const player_t plr2) {
 // 	history->players[0] = plr1;
 // 	history->players[1] = plr2;
 	history->result = PENDING;
+
+	history->time_limit = time_limit;
+	history->is_fake = false;
 
 	return history;
 }
@@ -121,7 +126,7 @@ void set_timestamp (history_t *history, const timestamp_t timestamp) {
 history_t* reverse_history (const history_t *history) {
 	player_t plr1, plr2;
 	get_players(history, &plr1, &plr2);
-	history_t *reversed_history = create_history(plr1, plr2);
+	history_t *reversed_history = create_history(plr1, plr2, get_time_limit(history));
 	if (reversed_history == NULL)
 		return NULL;
 	strncpy(reversed_history->timestamp, history->timestamp, TIMESTAMP_SIZE);
@@ -158,6 +163,26 @@ void get_players (const history_t *history, player_t *plr1, player_t *plr2) {
 void init_player (player_t *plr, const char *const name, const enum player_type type) {
 	strncpy(plr->name, name, sizeof(player_name_t));
 	plr->type = type;
+}
+
+
+int get_time_limit (const history_t* history) {
+	return history->time_limit;
+}
+
+
+bool is_fake_history (const history_t *history) {
+	return history->is_fake;
+}
+
+
+void set_history_fake (history_t *history) {
+	history->is_fake = true;
+}
+
+
+void unset_history_fake (history_t *history) {
+	history->is_fake = false;
 }
 
 

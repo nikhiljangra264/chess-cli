@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "minimax_ab.h"
 #include "../core/chess_engine.h"
@@ -23,13 +24,33 @@ bool minimax_ab_play (board_t *board, history_t *history, const minimax_ab_ai_t 
 	// initialize random no generator
 	srand((unsigned int) time(&t));
 
+	// work on duplicate board so that it doesn't mess with display and timer threads.
+	board_t *dup_board = (board_t *) malloc(sizeof(board_t));
+	copy_board(dup_board, board);
+
+	// mark as fake so that it doesn't pormpt promote menu when pawn reaches end in simulation
+	dup_board->is_fake = true;
+	// mark as fake to avoid rendering of simulated history
+	set_history_fake(history);
+
 	// find best move
-	move_t best_move = _minimax_ab(board, history, MIN_BOARD_VALUE, MAX_BOARD_VALUE, minimax_ab_ai.depth, minimax_ab_ai.eval_func);
+	// mark board as fake, so that chess_engince.c:move_piece doesn't see simulated HUMAN moves as real, also avoid display of simulated moves in game.c:refresh_display
+// 	board->is_fake = true;
+	move_t best_move = _minimax_ab(dup_board, history, MIN_BOARD_VALUE, MAX_BOARD_VALUE, minimax_ab_ai.depth, minimax_ab_ai.eval_func);
+// 	board->is_fake = false;
+
+	// unset history fake so that it can be rendered
+	unset_history_fake(history);
+
+	// sleep some random amount of time to mimic thinking
+	int sleep_time = rand()%(7-minimax_ab_ai.depth) + 1;
+	sleep(sleep_time);
 
 	/* since the move calculated is valid, setting can_be_dest of the target to true to make it work with chess_engine.c:move_piece function. */
 	board->tiles[best_move.dest_tile[0]][best_move.dest_tile[1]].can_be_dest = true;
 	bool return_value = move_piece(board, best_move.dest_tile, best_move.src_tile, history);
 	clear_dest(board);
+
 	return return_value;
 }
 
@@ -96,7 +117,7 @@ static move_t _minimax_ab (board_t *board, history_t *history, board_value_t alp
 		for (int i = 0; i < moves_count; i++) {
 			// simulate the move
 			/* set board->is_fake as true to hint the chess_engine.c that HUMAN moves are being simulated (especially, chess_engine.c:move_piece). set before every move as the board is copied from history after undo and will set board->is_fake to false after copying last real board */
-			board->is_fake = true;	
+// 			board->is_fake = true;	
 			/* since the moves array contains valid destinations, setting can_be_dest of the target to true to make it work with chess_engine.c:move_piece function. */
 // 			tile_t *dest[1] = { &(board->tiles[moves[i].dest_tile[0]][moves[i].dest_tile[1]]) };
 // 			set_dest(board, dest);
@@ -140,7 +161,7 @@ static move_t _minimax_ab (board_t *board, history_t *history, board_value_t alp
 		for (int i = 0; i < moves_count; i++) {
 			// simulate the move
 			/* set board->is_fake as true to hint the chess_engine.c that HUMAN moves are being simulated (especially, chess_engine.c:move_piece). set before every move as the board is copied from history after undo and will set board->is_fake to false after copying last real board */
-			board->is_fake = true;	
+// 			board->is_fake = true;	
 			/* since the moves array contains valid destinations, setting can_be_dest of the target to true to make it work with chess_engine.c:move_piece function. */
 // 			tile_t *dest[1] = { &(board->tiles[moves[i].dest_tile[0]][moves[i].dest_tile[1]]) };
 // 			set_dest(board, dest);
@@ -182,7 +203,7 @@ static move_t _minimax_ab (board_t *board, history_t *history, board_value_t alp
 	}
 
 	// make the board->is_fake false before returning so that game can continue as normal for HUMAN, also AI will set board->is_fake to true before recursively calling this function anyway.
-	board->is_fake = false;
+// 	board->is_fake = false;
 	// clear_dest so that no tile remains marked as can_be_dest
 	clear_dest(board);
 	free(moves);

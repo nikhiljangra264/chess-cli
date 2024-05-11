@@ -56,11 +56,12 @@ typedef struct board_t {
 	enum result result;
 	short captured[2][6];
 	bool is_fake;
+	int plr_times[2];	// in secs
 } board_t;
 
 
 wchar_t		get_piece_face				(const piece_t *piece);
-void		init_board					(board_t *board);
+void		init_board					(board_t *board, int time_limit);
 void		copy_board					(board_t *dest_board, const board_t *src_board);
 void		delete_board				(board_t *board);
 char		get_piece_for_move_notation	(const piece_t *piece);
