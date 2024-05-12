@@ -35,6 +35,8 @@ typedef struct {
 	const chess_clock_t	*clock;
 } display_data_t;
 
+
+static	bool					is_human_chance		(const board_t *board, const player_t plr1, const player_t plr2);
 static	bool					_play				(board_t *board, history_t *history);
 static	void					undo_game			(board_t *board, history_t *history, chess_clock_t *clock);
 static	enum game_return_code	game_over			(board_t *board, history_t *history);
@@ -100,14 +102,6 @@ enum game_return_code init_game(const game_settings_t game_settings) {
 	initialize_without_box(board_scr);
 	initialize_with_box(hud_scr);
 
-	// initiallly clear these windows otherwise they print gibbrish on screen
-	// because we won't be using wclear in display thread as it causes flicker and
-	// will use werase instead.
-	wclear(menu_scr);
-	wclear(plr1_scr);
-	wclear(plr2_scr);
-	wclear(board_scr);
-	wclear(hud_scr);
 
 /* 	wrefresh(stdscr);
 	wrefresh(game_scr);
@@ -127,6 +121,19 @@ enum game_return_code init_game(const game_settings_t game_settings) {
 		.clock = clock,
 	};
 	int rc = pthread_create(&display_thread, NULL, refresh_display, (void*) &display_data);
+
+	// if cpu is white, trigger the first cpu move
+	if (plr1.type != HUMAN)
+		_play(board, history);
+	//
+	// initiallly clear these windows otherwise they print gibbrish on screen
+	// because we won't be using wclear in display thread as it causes flicker and
+	// will use werase instead.
+	wclear(menu_scr);
+	wclear(plr1_scr);
+	wclear(plr2_scr);
+	wclear(board_scr);
+	wclear(hud_scr);
 
 	while (true) {
 /* 		show_player_info(board, plr1, plr2, clock);
@@ -160,8 +167,12 @@ enum game_return_code init_game(const game_settings_t game_settings) {
 			}
 
 			// handle board events
-			else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
+			else if (is_human_chance(board, plr1, plr2) && (key == '\n' || key == '\r' || key == KEY_ENTER)) {
+// 			else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
 				if (sel_tile[0] != INVALID_ROW && sel_tile[1] != INVALID_ROW) {
+					/* TODO: insert logic to check if selected move is of players own piece and
+					 * not of opponent's piece that the player was able to select in it's prev move.
+					 */
 					if (move_piece(board, cur_tile, sel_tile, history)) {
 						if (board->result != PENDING) { // result is calculated in move_piece
 							show_history(history);
@@ -223,6 +234,11 @@ enum game_return_code init_game(const game_settings_t game_settings) {
 	del_game_wins();
 
 	return return_code;
+}
+
+
+static bool is_human_chance (const board_t *board, const player_t plr1, const player_t plr2) {
+	return ((board->chance == WHITE && plr1.type == HUMAN) || (board->chance == BLACK && plr2.type == HUMAN));
 }
 
 

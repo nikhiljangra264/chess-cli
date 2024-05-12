@@ -170,7 +170,7 @@ enum return_option_t init_ai_game_settings_menu (game_settings_t *game_settings)
 	char difficulty_opts[][7] = { " Easy ", "Medium", " Hard " };
 	int selected_difficulty = 0;
 	int no_of_difficulties = sizeof(difficulty_opts)/sizeof(difficulty_opts[0]);
-	int timer_opts[] = { 0, 3, 5, 10, 15, 30, 60 };	// in mins, 0 is off
+	int timer_opts[] = { -1, 3, 5, 10, 15, 30, 60 };	// in mins, -1 is off
 	int selected_timer = 0;
 	int no_of_timers = sizeof(timer_opts)/sizeof(timer_opts[0]);
 

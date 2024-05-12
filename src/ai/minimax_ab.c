@@ -33,17 +33,13 @@ bool minimax_ab_play (board_t *board, history_t *history, const minimax_ab_ai_t 
 	// mark as fake to avoid rendering of simulated history
 	set_history_fake(history);
 
-	// find best move
-	// mark board as fake, so that chess_engince.c:move_piece doesn't see simulated HUMAN moves as real, also avoid display of simulated moves in game.c:refresh_display
-// 	board->is_fake = true;
 	move_t best_move = _minimax_ab(dup_board, history, MIN_BOARD_VALUE, MAX_BOARD_VALUE, minimax_ab_ai.depth, minimax_ab_ai.eval_func);
-// 	board->is_fake = false;
 
 	// unset history fake so that it can be rendered
 	unset_history_fake(history);
 
 	// sleep some random amount of time to mimic thinking
-	int sleep_time = rand()%(7-minimax_ab_ai.depth) + 1;
+	int sleep_time = max(0, rand()%(4-minimax_ab_ai.depth) + 1);
 	sleep(sleep_time);
 
 	/* since the move calculated is valid, setting can_be_dest of the target to true to make it work with chess_engine.c:move_piece function. */
