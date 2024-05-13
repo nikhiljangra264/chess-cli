@@ -6,6 +6,7 @@
 #include "main_menu.h"
 #include "../core/game.h"
 #include "load_menu.h"
+#include "game_settings_menu.h"
 
 
 static	WINDOW	*main_menu_scr;

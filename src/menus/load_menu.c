@@ -16,7 +16,7 @@ static	int		term_w;
 
 
 static	timestamp_t*			collect_save_files					(int *saves_count);
-static	int						desc_timestamp_cmp					(char *t1, char *t2);
+static	int						desc_timestamp_cmp					(const void *a, const void *b);
 static	void					show_load_menu_title				(void);
 static	void					show_save_files						(timestamp_t *saves, unsigned int saves_count, unsigned int cur_save);
 static	void					convert_timestamp_to_display_format	(char *timestamp_display, timestamp_t timestamp);
@@ -159,7 +159,9 @@ static timestamp_t* collect_save_files (int *saves_count) {
 }
 
 
-static int desc_timestamp_cmp (char *t1, char *t2) {
+static int desc_timestamp_cmp (const void *a, const void *b) {
+	const char *t1 = (char *) a;
+	const char *t2 = (char *) b;
 	return strncmp(t2, t1, TIMESTAMP_SIZE);
 }
 
