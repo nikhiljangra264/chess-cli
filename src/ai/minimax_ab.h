@@ -5,6 +5,8 @@
 #include "../core/board.h"
 #include "../core/history.h"
 
+#define	MAX_AI_DEPTH 5
+
 
 typedef struct {
 	int depth;

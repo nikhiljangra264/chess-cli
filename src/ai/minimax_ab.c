@@ -38,8 +38,8 @@ bool minimax_ab_play (board_t *board, history_t *history, const minimax_ab_ai_t 
 	// unset history fake so that it can be rendered
 	unset_history_fake(history);
 
-	// sleep some random amount of time to mimic thinking
-	int sleep_time = max(0, rand()%(4-minimax_ab_ai.depth) + 1);
+	// sleep some random amount of time to mimic thinking (aviod divide by zero)
+	int sleep_time = max(1, rand()%(MAX_AI_DEPTH+1 - minimax_ab_ai.depth) + 1);
 	sleep(sleep_time);
 
 	/* since the move calculated is valid, setting can_be_dest of the target to true to make it work with chess_engine.c:move_piece function. */
