@@ -35,52 +35,63 @@ enum load_return_code load_menu (timestamp_t load_timestamp) {
 
 	int key = -1;
 	while (true) {
+
 		if (key == KEY_RESIZE) {
 			getmaxyx(stdscr, term_h, term_w);
 			translate_with_box(load_menu_scr);
 			wclear(stdscr);
 		}
 
-		// handle menu keys
-		if (key == 'n') {
-			if ((cur_save/LOAD_PAGE_SIZE + 1) * LOAD_PAGE_SIZE < saves_count)
-				cur_save = (cur_save/LOAD_PAGE_SIZE + 1) * LOAD_PAGE_SIZE;
-		} else if (key == 'p') {
-			if (cur_save >= LOAD_PAGE_SIZE)
-				cur_save = (cur_save/LOAD_PAGE_SIZE - 1) * LOAD_PAGE_SIZE;
-		} else if (key == 'q') {
-			return_code = LOAD_FILE_NOT_SELECTED;
-			break;
+		// if window is too small
+		// display a message to the user to increase window size
+		if(term_h < load_menu_scr_h || term_w < load_menu_scr_w)
+		{
+			wclear(load_menu_scr);
+			wrefresh(load_menu_scr);
+			mvprintw(term_h / 2, 0, "Increase the window size");
 		}
+		else
+		{
 
-		// handle file selection
-		else if (key == KEY_UP || key == 'k') {
-			if (cur_save > 0)
-				cur_save--;
-		} else if (key == KEY_DOWN || key == 'j') {
-			if (cur_save + 1 < saves_count)
-				cur_save++;
-		} else if (key == KEY_LEFT || key == 'h') {
-			if (cur_save >= LOAD_LIST_SIZE)
-				cur_save -= LOAD_LIST_SIZE;
-		} else if (key == KEY_RIGHT || key == 'l') {
-			if (cur_save + LOAD_LIST_SIZE < saves_count)
-				cur_save += LOAD_LIST_SIZE;
-		} else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
-			strncpy(load_timestamp, saves[cur_save], TIMESTAMP_SIZE);
-			return_code = LOAD_FILE_SELECTED;
-			break;
+			// handle menu keys
+			if (key == 'n') {
+				if ((cur_save/LOAD_PAGE_SIZE + 1) * LOAD_PAGE_SIZE < saves_count)
+					cur_save = (cur_save/LOAD_PAGE_SIZE + 1) * LOAD_PAGE_SIZE;
+			} else if (key == 'p') {
+				if (cur_save >= LOAD_PAGE_SIZE)
+					cur_save = (cur_save/LOAD_PAGE_SIZE - 1) * LOAD_PAGE_SIZE;
+			} else if (key == 'q') {
+				return_code = LOAD_FILE_NOT_SELECTED;
+				break;
+			}
+
+			// handle file selection
+			else if (key == KEY_UP || key == 'k') {
+				if (cur_save > 0)
+					cur_save--;
+			} else if (key == KEY_DOWN || key == 'j') {
+				if (cur_save + 1 < saves_count)
+					cur_save++;
+			} else if (key == KEY_LEFT || key == 'h') {
+				if (cur_save >= LOAD_LIST_SIZE)
+					cur_save -= LOAD_LIST_SIZE;
+			} else if (key == KEY_RIGHT || key == 'l') {
+				if (cur_save + LOAD_LIST_SIZE < saves_count)
+					cur_save += LOAD_LIST_SIZE;
+			} else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
+				strncpy(load_timestamp, saves[cur_save], TIMESTAMP_SIZE);
+				return_code = LOAD_FILE_SELECTED;
+				break;
+			}
+
+			box(load_menu_scr, 0, 0);
+
+			show_load_menu_title();
+			show_save_files(saves, saves_count, cur_save);
+			show_load_menu_bar();
 		}
-
-		wclear(load_menu_scr);
-		box(load_menu_scr, 0, 0);
-
-		show_load_menu_title();
-		show_save_files(saves, saves_count, cur_save);
-		show_load_menu_bar();
-
+		wrefresh(stdscr);
 		wrefresh(load_menu_scr);
-
 		key = wgetch(load_menu_scr);
 	}
 

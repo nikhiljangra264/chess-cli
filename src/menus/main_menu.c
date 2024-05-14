@@ -46,7 +46,25 @@ void init_main_menu() {
 			translate_with_box(main_menu_scr);
 			wclear(stdscr);
 		}
+		// if window is too small
+		// display a message to the user to increase window size
+		while(term_h < main_menu_scr_h || term_w < main_menu_scr_w)
+		{
+			wclear(main_menu_scr);
+			wrefresh(main_menu_scr);
+			mvprintw(term_h / 2, 0, "Increase the window size");
 
+			wrefresh(stdscr);
+			key = wgetch(stdscr);
+
+			if (key == KEY_RESIZE) {
+				getmaxyx(stdscr, term_h, term_w);
+				wclear(stdscr);
+			}
+		}
+
+		// if window size is not small
+		// accept user inputs
 		if (key == KEY_UP || key == 'k')
 			selected_opt = (selected_opt-1 + NO_OF_OPTS) % NO_OF_OPTS;
 		else if (key == KEY_DOWN || key == 'j')

@@ -51,107 +51,118 @@ enum return_option_t init_human_game_settings_menu (game_settings_t *game_settin
 			translate_with_box(game_settings_menu_scr);
 			wclear(stdscr);
 		}
-
-		// handle name input
-		if (selected_opt == PLR1_OPT) {
-			if ((plr1_name_len < PLAYERNAME_SIZE) && ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == '_')) {
-				plr1_name[plr1_name_len++] = key;
-			} else if (plr1_name_len > 0 && key == KEY_BACKSPACE) {
-				plr1_name_len--;
-				wclear(game_settings_menu_scr);
-				box(game_settings_menu_scr, 0, 0);
-			}
-		} else if (selected_opt == PLR2_OPT) {
-			if ((plr2_name_len < PLAYERNAME_SIZE) && ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == '_')) {
-				plr2_name[plr2_name_len++] = key;
-			} else if (plr2_name_len > 0 && key == KEY_BACKSPACE) {
-				plr2_name_len--;
-				wclear(game_settings_menu_scr);
-				box(game_settings_menu_scr, 0, 0);
-			}
+		// if window is too small
+		// display a message to the user to increase window size
+		if(term_h < game_settings_menu_scr_h || term_w < game_settings_menu_scr_w)
+		{
+			wclear(game_settings_menu_scr);
+			wrefresh(game_settings_menu_scr);
+			mvprintw(term_h / 2, 0, "Increase the window size");
 		}
+		else
+		{
 
-		// handle timer input
-		if (selected_opt == TIMER_OPT) {
-			if (key == KEY_LEFT || key == 'h')
-				selected_timer = (selected_timer - 1 + no_of_timers) % no_of_timers;
-			else if (key == KEY_RIGHT || key == 'l')
-				selected_timer = (selected_timer + 1) % no_of_timers;
-		}
+			// handle name input
+			if (selected_opt == PLR1_OPT) {
+				if ((plr1_name_len < PLAYERNAME_SIZE) && ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == '_')) {
+					plr1_name[plr1_name_len++] = key;
+				} else if (plr1_name_len > 0 && key == KEY_BACKSPACE) {
+					plr1_name_len--;
+					wclear(game_settings_menu_scr);
+					box(game_settings_menu_scr, 0, 0);
+				}
+			} else if (selected_opt == PLR2_OPT) {
+				if ((plr2_name_len < PLAYERNAME_SIZE) && ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == '_')) {
+					plr2_name[plr2_name_len++] = key;
+				} else if (plr2_name_len > 0 && key == KEY_BACKSPACE) {
+					plr2_name_len--;
+					wclear(game_settings_menu_scr);
+					box(game_settings_menu_scr, 0, 0);
+				}
+			}
 
-		// handle menu navigation (don't allow cycling as layout isn't continuous)
-		if (key == KEY_UP || (selected_opt != PLR1_OPT && selected_opt != PLR2_OPT && key == 'k'))
-			selected_opt = max(selected_opt-1, 0);
-		else if (key == KEY_DOWN || (selected_opt != PLR1_OPT && selected_opt != PLR2_OPT && key == 'j'))
-			selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
-		else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
-			if (selected_opt == START_OPT) {
-				plr1_name[plr1_name_len] = '\0';
-				plr2_name[plr2_name_len] = '\0';
-				init_player(game_settings->players, plr1_name, HUMAN);
-				init_player(game_settings->players+1, plr2_name, HUMAN);
-				game_settings->game_mode = HUMAN_MODE;
-				game_settings->time_limit = timer_opts[selected_timer];
+			// handle timer input
+			if (selected_opt == TIMER_OPT) {
+				if (key == KEY_LEFT || key == 'h')
+					selected_timer = (selected_timer - 1 + no_of_timers) % no_of_timers;
+				else if (key == KEY_RIGHT || key == 'l')
+					selected_timer = (selected_timer + 1) % no_of_timers;
+			}
 
-				delwin(game_settings_menu_scr);
-				return OKAY;
-			} else if (selected_opt == CANCEL_OPT) {
-				delwin(game_settings_menu_scr);
-				return CANCEL;
-			} else {
+			// handle menu navigation (don't allow cycling as layout isn't continuous)
+			if (key == KEY_UP || (selected_opt != PLR1_OPT && selected_opt != PLR2_OPT && key == 'k'))
+				selected_opt = max(selected_opt-1, 0);
+			else if (key == KEY_DOWN || (selected_opt != PLR1_OPT && selected_opt != PLR2_OPT && key == 'j'))
 				selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
+			else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
+				if (selected_opt == START_OPT) {
+					plr1_name[plr1_name_len] = '\0';
+					plr2_name[plr2_name_len] = '\0';
+					init_player(game_settings->players, plr1_name, HUMAN);
+					init_player(game_settings->players+1, plr2_name, HUMAN);
+					game_settings->game_mode = HUMAN_MODE;
+					game_settings->time_limit = timer_opts[selected_timer];
+
+					delwin(game_settings_menu_scr);
+					return OKAY;
+				} else if (selected_opt == CANCEL_OPT) {
+					delwin(game_settings_menu_scr);
+					return CANCEL;
+				} else {
+					selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
+				}
 			}
-		}
 
 
-		// layout for options before START button
-		for (int i=0; i<START_OPT; i++) {
-			if (i == selected_opt)
+			// layout for options before START button
+			for (int i=0; i<START_OPT; i++) {
+				if (i == selected_opt)
+					wattron(game_settings_menu_scr, A_STANDOUT);
+				mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + i, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[i], OPTS_SIZE);
+
+				wattroff(game_settings_menu_scr, A_STANDOUT);
+			}
+
+			// display player names
+			if (PLR1_OPT == selected_opt)
 				wattron(game_settings_menu_scr, A_STANDOUT);
-			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + i, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[i], OPTS_SIZE);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR1_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR1_OPT]) + 1, plr1_name, plr1_name_len);
+			if (plr1_name_len < PLAYERNAME_SIZE && PLR1_OPT == selected_opt) {
+				wattron(game_settings_menu_scr, A_BLINK);
+				mvwaddch(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR1_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR1_OPT]) + 1 + plr1_name_len, '_');
+				wattroff(game_settings_menu_scr, A_BLINK);
+			}
+			wattroff(game_settings_menu_scr, A_STANDOUT);
+			if (PLR2_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR2_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR2_OPT]) + 1, plr2_name, plr2_name_len);
+			if (plr2_name_len < PLAYERNAME_SIZE && PLR2_OPT == selected_opt) {
+				wattron(game_settings_menu_scr, A_BLINK);
+				mvwaddch(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR2_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR2_OPT]) + 1 + plr2_name_len, '_');
+				wattroff(game_settings_menu_scr, A_BLINK);
+			}
+			wattroff(game_settings_menu_scr, A_STANDOUT);
 
+			// display timer value
+			if (TIMER_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			if (selected_timer == 0)
+				mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "<   off   >", 11);
+			else
+				mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "< %2d mins >", timer_opts[selected_timer]);
+			wattroff(game_settings_menu_scr, A_STANDOUT);
+
+			// layout for START and CANCEL button
+			if (START_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[START_OPT], strlen(options[START_OPT]));
+			if (CANCEL_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			else
+				wattroff(game_settings_menu_scr, A_STANDOUT);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + strlen(options[START_OPT]), options[CANCEL_OPT], strlen(options[CANCEL_OPT]));
 			wattroff(game_settings_menu_scr, A_STANDOUT);
 		}
-
-		// display player names
-		if (PLR1_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR1_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR1_OPT]) + 1, plr1_name, plr1_name_len);
-		if (plr1_name_len < PLAYERNAME_SIZE && PLR1_OPT == selected_opt) {
-			wattron(game_settings_menu_scr, A_BLINK);
-			mvwaddch(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR1_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR1_OPT]) + 1 + plr1_name_len, '_');
-			wattroff(game_settings_menu_scr, A_BLINK);
-		}
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-		if (PLR2_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR2_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR2_OPT]) + 1, plr2_name, plr2_name_len);
-		if (plr2_name_len < PLAYERNAME_SIZE && PLR2_OPT == selected_opt) {
-			wattron(game_settings_menu_scr, A_BLINK);
-			mvwaddch(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR2_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR2_OPT]) + 1 + plr2_name_len, '_');
-			wattroff(game_settings_menu_scr, A_BLINK);
-		}
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-
-		// display timer value
-		if (TIMER_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		if (selected_timer == 0)
-			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "<   off   >", 11);
-		else
-			mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "< %2d mins >", timer_opts[selected_timer]);
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-
-		// layout for START and CANCEL button
-		if (START_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[START_OPT], strlen(options[START_OPT]));
-		if (CANCEL_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		else
-			wattroff(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + strlen(options[START_OPT]), options[CANCEL_OPT], strlen(options[CANCEL_OPT]));
-		wattroff(game_settings_menu_scr, A_STANDOUT);
 
 		wrefresh(stdscr);
 		wrefresh(game_settings_menu_scr);
@@ -201,134 +212,145 @@ enum return_option_t init_ai_game_settings_menu (game_settings_t *game_settings)
 	wrefresh(game_settings_menu_scr);
 
 	while (true) {
-		box(game_settings_menu_scr, 0, 0);
 
 		if (key == KEY_RESIZE) {
 			getmaxyx(stdscr, term_h, term_w);
 			translate_with_box(game_settings_menu_scr);
 			wclear(stdscr);
 		}
-
-		// handle name input
-		if (selected_opt == PLR_OPT) {
-			if ((plr_name_len < PLAYERNAME_SIZE) && ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == '_')) {
-				plr_name[plr_name_len++] = key;
-			} else if (plr_name_len > 0 && key == KEY_BACKSPACE) {
-				plr_name_len--;
-				wclear(game_settings_menu_scr);
-				box(game_settings_menu_scr, 0, 0);
-			}
+		// if window is too small
+		// display a message to the user to increase window size
+		if(term_h < game_settings_menu_scr_h || term_w < game_settings_menu_scr_w)
+		{
+			wclear(game_settings_menu_scr);
+			wrefresh(game_settings_menu_scr);
+			mvprintw(term_h / 2, 0, "Increase the window size");
 		}
+		else
+		{
+			box(game_settings_menu_scr, 0, 0);
 
-		// handle play as input
-		if (selected_opt == PLAY_AS_OPT) {
-			if (key == KEY_LEFT || key == 'h' || key == KEY_RIGHT || key == 'l')
-				play_as = (play_as == BLACK) ? WHITE: BLACK;
-		}
-
-		// handle difficulty input
-		if (selected_opt == DIFFICULTY_OPT) {
-			if (key == KEY_LEFT || key == 'h')
-				selected_difficulty = (selected_difficulty - 1 + no_of_difficulties) % no_of_difficulties;
-			else if (key == KEY_RIGHT || key == 'l')
-				selected_difficulty = (selected_difficulty + 1) % no_of_difficulties;
-		}
-
-		// handle timer input
-		if (selected_opt == TIMER_OPT) {
-			if (key == KEY_LEFT || key == 'h')
-				selected_timer = (selected_timer - 1 + no_of_timers) % no_of_timers;
-			else if (key == KEY_RIGHT || key == 'l')
-				selected_timer = (selected_timer + 1) % no_of_timers;
-		}
-
-		// handle menu navigation (don't allow cycling as layout isn't continuous)
-		if (key == KEY_UP || (selected_opt != PLR_OPT && key == 'k'))
-			selected_opt = max(selected_opt-1, 0);
-		else if (key == KEY_DOWN || (selected_opt != PLR_OPT && key == 'j'))
-			selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
-		else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
-			if (selected_opt == START_OPT) {
-				short int human_index = (play_as == BLACK) ? 1: 0;
-				short int ai_index = 1 - human_index;
-				plr_name[plr_name_len] = '\0';
-				init_player(game_settings->players + human_index, plr_name, HUMAN);
-				switch (selected_difficulty) {
-					case 0:
-						init_player(game_settings->players + ai_index, "AI LVL 1", AI_LVL1);
-						break;
-					case 1:
-						init_player(game_settings->players + ai_index, "AI LVL 2", AI_LVL2);
-						break;
-					case 2:
-						init_player(game_settings->players + ai_index, "AI LVL 3", AI_LVL3);
-						break;
+			// handle name input
+			if (selected_opt == PLR_OPT) {
+				if ((plr_name_len < PLAYERNAME_SIZE) && ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') || key == '_')) {
+					plr_name[plr_name_len++] = key;
+				} else if (plr_name_len > 0 && key == KEY_BACKSPACE) {
+					plr_name_len--;
+					wclear(game_settings_menu_scr);
+					box(game_settings_menu_scr, 0, 0);
 				}
-				game_settings->game_mode = AI_MODE;
-				game_settings->time_limit = timer_opts[selected_timer];
-
-				delwin(game_settings_menu_scr);
-				return OKAY;
-			} else if (selected_opt == CANCEL_OPT) {
-				delwin(game_settings_menu_scr);
-				return CANCEL;
-			} else {
-				selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
 			}
-		}
+
+			// handle play as input
+			if (selected_opt == PLAY_AS_OPT) {
+				if (key == KEY_LEFT || key == 'h' || key == KEY_RIGHT || key == 'l')
+					play_as = (play_as == BLACK) ? WHITE: BLACK;
+			}
+
+			// handle difficulty input
+			if (selected_opt == DIFFICULTY_OPT) {
+				if (key == KEY_LEFT || key == 'h')
+					selected_difficulty = (selected_difficulty - 1 + no_of_difficulties) % no_of_difficulties;
+				else if (key == KEY_RIGHT || key == 'l')
+					selected_difficulty = (selected_difficulty + 1) % no_of_difficulties;
+			}
+
+			// handle timer input
+			if (selected_opt == TIMER_OPT) {
+				if (key == KEY_LEFT || key == 'h')
+					selected_timer = (selected_timer - 1 + no_of_timers) % no_of_timers;
+				else if (key == KEY_RIGHT || key == 'l')
+					selected_timer = (selected_timer + 1) % no_of_timers;
+			}
+
+			// handle menu navigation (don't allow cycling as layout isn't continuous)
+			if (key == KEY_UP || (selected_opt != PLR_OPT && key == 'k'))
+				selected_opt = max(selected_opt-1, 0);
+			else if (key == KEY_DOWN || (selected_opt != PLR_OPT && key == 'j'))
+				selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
+			else if (key == '\n' || key == '\r' || key == KEY_ENTER) {
+				if (selected_opt == START_OPT) {
+					short int human_index = (play_as == BLACK) ? 1: 0;
+					short int ai_index = 1 - human_index;
+					plr_name[plr_name_len] = '\0';
+					init_player(game_settings->players + human_index, plr_name, HUMAN);
+					switch (selected_difficulty) {
+						case 0:
+							init_player(game_settings->players + ai_index, "AI LVL 1", AI_LVL1);
+							break;
+						case 1:
+							init_player(game_settings->players + ai_index, "AI LVL 2", AI_LVL2);
+							break;
+						case 2:
+							init_player(game_settings->players + ai_index, "AI LVL 3", AI_LVL3);
+							break;
+					}
+					game_settings->game_mode = AI_MODE;
+					game_settings->time_limit = timer_opts[selected_timer];
+
+					delwin(game_settings_menu_scr);
+					return OKAY;
+				} else if (selected_opt == CANCEL_OPT) {
+					delwin(game_settings_menu_scr);
+					return CANCEL;
+				} else {
+					selected_opt = min(selected_opt+1, NO_OF_OPTS-1);
+				}
+			}
 
 
-		// layout for options before START button
-		for (int i=0; i<START_OPT; i++) {
-			if (i == selected_opt)
+			// layout for options before START button
+			for (int i=0; i<START_OPT; i++) {
+				if (i == selected_opt)
+					wattron(game_settings_menu_scr, A_STANDOUT);
+				mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + i, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[i], OPTS_SIZE);
+
+				wattroff(game_settings_menu_scr, A_STANDOUT);
+			}
+
+			// display player name
+			if (PLR_OPT == selected_opt)
 				wattron(game_settings_menu_scr, A_STANDOUT);
-			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + i, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[i], OPTS_SIZE);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR_OPT]) + 1, plr_name, plr_name_len);
+			if (plr_name_len < PLAYERNAME_SIZE && PLR_OPT == selected_opt) {
+				wattron(game_settings_menu_scr, A_BLINK);
+				mvwaddch(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR_OPT]) + 1 + plr_name_len, '_');
+				wattroff(game_settings_menu_scr, A_BLINK);
+			}
+			wattroff(game_settings_menu_scr, A_STANDOUT);
 
+			// display play as value
+			if (PLAY_AS_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLAY_AS_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLAY_AS_OPT]) + 1, "< %s >", (play_as == BLACK ? "Black": "White"));
+			wattroff(game_settings_menu_scr, A_STANDOUT);
+
+			// display difficulty value
+			if (DIFFICULTY_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + DIFFICULTY_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[DIFFICULTY_OPT]) + 1, "< %-s >", difficulty_opts[selected_difficulty]);
+			wattroff(game_settings_menu_scr, A_STANDOUT);
+
+			// display timer value
+			if (TIMER_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			if (selected_timer == 0)
+				mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "<   off   >", 11);
+			else
+				mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "< %2d mins >", timer_opts[selected_timer]);
+			wattroff(game_settings_menu_scr, A_STANDOUT);
+
+			// layout for START and CANCEL button
+			if (START_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[START_OPT], strlen(options[START_OPT]));
+			if (CANCEL_OPT == selected_opt)
+				wattron(game_settings_menu_scr, A_STANDOUT);
+			else
+				wattroff(game_settings_menu_scr, A_STANDOUT);
+			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + strlen(options[START_OPT]), options[CANCEL_OPT], strlen(options[CANCEL_OPT]));
 			wattroff(game_settings_menu_scr, A_STANDOUT);
 		}
-
-		// display player name
-		if (PLR_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR_OPT]) + 1, plr_name, plr_name_len);
-		if (plr_name_len < PLAYERNAME_SIZE && PLR_OPT == selected_opt) {
-			wattron(game_settings_menu_scr, A_BLINK);
-			mvwaddch(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLR_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLR_OPT]) + 1 + plr_name_len, '_');
-			wattroff(game_settings_menu_scr, A_BLINK);
-		}
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-
-		// display play as value
-		if (PLAY_AS_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + PLAY_AS_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[PLAY_AS_OPT]) + 1, "< %s >", (play_as == BLACK ? "Black": "White"));
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-
-		// display difficulty value
-		if (DIFFICULTY_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + DIFFICULTY_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[DIFFICULTY_OPT]) + 1, "< %-s >", difficulty_opts[selected_difficulty]);
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-
-		// display timer value
-		if (TIMER_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		if (selected_timer == 0)
-			mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "<   off   >", 11);
-		else
-			mvwprintw(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + TIMER_OPT, game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + get_option_offset(options[TIMER_OPT]) + 1, "< %2d mins >", timer_opts[selected_timer]);
-		wattroff(game_settings_menu_scr, A_STANDOUT);
-
-		// layout for START and CANCEL button
-		if (START_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2, options[START_OPT], strlen(options[START_OPT]));
-		if (CANCEL_OPT == selected_opt)
-			wattron(game_settings_menu_scr, A_STANDOUT);
-		else
-			wattroff(game_settings_menu_scr, A_STANDOUT);
-		mvwaddnstr(game_settings_menu_scr, game_settings_menu_scr_h/2 - NO_OF_OPTS/2 + (NO_OF_OPTS - 1), game_settings_menu_scr_w/2 - (OPTS_SIZE-1)/2 + strlen(options[START_OPT]), options[CANCEL_OPT], strlen(options[CANCEL_OPT]));
-		wattroff(game_settings_menu_scr, A_STANDOUT);
 
 		wrefresh(stdscr);
 		wrefresh(game_settings_menu_scr);
